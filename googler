@@ -2356,12 +2356,12 @@ class GoogleParser(object):
         # So we set Title as Metadata, append NewsAge to Abstract and
         # clear Metadata to avoid showing the same Title and Metadata
         if self.news:
-            div_selector = 'div[data-hveid]'
+            div_selector = 'div.W0kfrc'
             title_selector = 'div'
-            h3_selector = 'div'
+            h3_selector = 'div.n0jPhd'
         else:
-            div_selector = 'div.g'
-            title_selector = 'div.tF2Cxc > div'
+            div_selector = 'div.MjjYud'
+            title_selector = 'div'
             h3_selector = 'h3'
 
         # cw is short for collapse_whitespace.
@@ -2373,48 +2373,39 @@ class GoogleParser(object):
                 # Skip smart cards.
                 continue
             try:
-                if div_g.select('.st'):
-                    # Old class structure, stopped working some time in
-                    # September 2020, but kept just in case.
-                    h3 = div_g.select('div.r h3')
-                    if h3:
-                        title = h3.text
-                        a = h3.parent
-                    else:
-                        h3 = div_g.select('h3.r')
-                        a = h3.select('a')
-                        title = a.text
-                        mime = div_g.select('.mime')
-                        if mime:
-                            title = mime.text + ' ' + title
-                    abstract_node = div_g.select('.st')
-                    metadata_node = div_g.select('.f')
-                else:
-                    # Current structure as of October 2020.
-                    # Note that a filetype tag (e.g. PDF) is now pretty
-                    # damn hard to parse with confidence (that it'll
-                    # survive the slighest further change), so we don't.
 
-                    # As of January 15th 2021, the html class is not rc anymore, it's tF2Cxc.
-                    # This approach is not very resilient to changes by Google, but it works for now.
-                    # title_node, details_node, *_ = div_g.select_all('div.rc > div')
-                    title_node, details_node, *_ = div_g.select_all(title_selector)
-                    if 'yuRUbf' not in title_node.classes:
-                        logger.debug('unexpected title node class(es): expected %r, got %r',
-                                     'yuRUbf', ' '.join(title_node.classes))
-                    if 'IsZvec' not in details_node.classes:
-                        logger.debug('unexpected details node class(es): expected %r, got %r',
-                                     'IsZvec', ' '.join(details_node.classes))
-                    a = title_node.select('a')
-                    h3 = a.select(h3_selector)
-                    title = h3.text
+                # Current structure as of October 2020.
+                # Note that a filetype tag (e.g. PDF) is now pretty
+                # damn hard to parse with confidence (that it'll
+                # survive the slighest further change), so we don't.
 
-                    if self.news:
-                        newstitle = title.split('.')
-                        #title = newstitle[1]
+                # As of January 15th 2021, the html class is not rc anymore, it's tF2Cxc.
+                # This approach is not very resilient to changes by Google, but it works for now.
+                # title_node, details_node, *_ = div_g.select_all('div.rc > div')
+                # title_node, details_node, *_ = div_g.select_all('div.tF2Cxc > div')
+                title_node, details_node, *_ = div_g.select_all(title_selector)
+                # if title_node != 'style' and title_node != 'script':
+                #     logger.debug("RESULTS: ")
+                #     logger.debug(title_node)
+                if 'yuRUbf' not in title_node.classes:
+                    logger.debug('unexpected title node class(es): expected %r, got %r',
+                                    'yuRUbf', ' '.join(title_node.classes))
+                if 'IsZvec' not in details_node.classes:
+                    logger.debug('unexpected details node class(es): expected %r, got %r',
+                                    'IsZvec', ' '.join(details_node.classes))
+                a = title_node.select('a')
+                h3 = a.select(h3_selector)
+                title = h3.text
 
-                    abstract_node = details_node.select('span')
-                    metadata_node = details_node.select('.f, span ~ div')
+                if self.news:
+                    newstitle = title.split('.')
+                    #title = newstitle[1]
+
+                title = h3.text
+                abstract_node = details_node.select_all('span').pop()
+                metadata_node = details_node.select('.f, span ~ div')
+                # logger.debug("RESULT: ")
+                # logger.debug(abstract_node)
                 url = self.unwrap_link(a.attr('href'))
                 matched_keywords = []
                 abstract = ''
